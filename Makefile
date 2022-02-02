@@ -1,75 +1,31 @@
-NAME	= fractol
-OS		= $(shell uname)
+NAME = fractol
 
-# directories
-SRCDIR	= ./src
-INCDIR	= ./includes
-OBJDIR	= ./obj
+LIST	= main.c mandelbrot.c color.c check_name.c julia.c tricon.c motion.c burning_ship.c
 
-# src / obj files
-SRC		= main.c \
-		  window.c \
-		  image.c \
-		  mouse.c \
-		  keyboard.c \
-		  zoom.c \
-		  fractal.c \
-		  palette.c \
-		  draw.c \
-		  color.c \
-		  viewport.c \
-		  $(addprefix fractals/,$(shell ls $(SRCDIR)/fractals | grep -E ".+\.c"))
+OBJ		= $(patsubst %.c,%.o,$(LIST))
 
-OBJ		= $(addprefix $(OBJDIR)/,$(SRC:.c=.o))
+CC = gcc
 
-# compiler
-CC		= gcc
-CFLAGS	= -Wall -Wextra -Werror -g
+FLAGS = -Wall -Werror -Wextra
 
+MLX = ./minilibx-linux/		#для macos ----> ./miniLibx/
 
-# mlx library
-ifeq ($(OS), Linux)
-	MLX		= ./miniLibX_X11/
-	MLX_LNK	= -L $(MLX) -l mlx -lXext -lX11
-else
-	MLX		= ./miniLibX/
-	MLX_LNK	= -L $(MLX) -l mlx -framework OpenGL -framework AppKit
-endif
+MLX_LINK	= -L $(MLX) -l mlx -lXext -lX11 -lm		#для macos ----> -framework OpenGL -framework AppKit
 
-MLX_INC	= -I $(MLX)
-MLX_LIB	= $(addprefix $(MLX),mlx.a)
+all: $(NAME) $(OBJ)
 
-# ft library
-FT		= ./libft/
-FT_LIB	= $(addprefix $(FT),libft.a)
-FT_INC	= -I ./libft
-FT_LNK	= -L ./libft -l ft -l pthread
+%.o : %.c fractol.h
+	$(CC) $(FLAGS) -c $< -o $@
 
-all: obj $(FT_LIB) $(MLX_LIB) $(NAME)
-
-obj:
-	mkdir -p $(OBJDIR)
-	mkdir -p $(OBJDIR)/fractals
-
-$(OBJDIR)/%.o:$(SRCDIR)/%.c
-	$(CC) $(CFLAGS) $(MLX_INC) $(FT_INC) -I $(INCDIR) -o $@ -c $<
-
-$(FT_LIB):
-	@make -C $(FT)
-
-$(MLX_LIB):
-	@make -C $(MLX)
-
-$(NAME): $(OBJ)
-	$(CC) $(OBJ) $(MLX_LNK) $(FT_LNK) -lm -o $(NAME)
+$(NAME) : $(OBJ)
+	$(CC) $(FLAGS) -o $(NAME) $(OBJ) $(MLX_LINK)
 
 clean:
-	rm -rf $(OBJDIR)
-	make -C $(FT) clean
-	make -C $(MLX) clean
+	rm -f $(OBJ)
 
 fclean: clean
-	rm -rf $(NAME)
-	make -C $(FT) fclean
+	rm -f $(NAME)
 
 re: fclean all
+
+.PHONNY : all clean fclean re
